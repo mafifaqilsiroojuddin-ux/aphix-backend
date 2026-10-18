@@ -8,7 +8,8 @@
         "includeFiles": [
           "routes/**",
           "lib/**",
-          "middleware/**"
+          "middleware/**",
+          "config.js"
         ]
       }
     }
