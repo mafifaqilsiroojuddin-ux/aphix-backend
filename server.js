@@ -36,10 +36,13 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Terjadi kesalahan server.' });
 });
 
-app.listen(config.PORT, () => {
-  console.log('=============================================');
-  console.log('  APHIX Backend berjalan di port ' + config.PORT);
-  console.log('  Cek: http://localhost:' + config.PORT + '/api/health');
-  console.log('=============================================');
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(config.PORT, () => {
+    console.log('=============================================');
+    console.log('  APHIX Backend berjalan di port ' + config.PORT);
+    console.log('  Cek: http://localhost:' + config.PORT + '/api/health');
+    console.log('=============================================');
+  });
+}
+
 module.exports = app;
