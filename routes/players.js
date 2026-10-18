@@ -1,59 +1,28 @@
-// =========================================================
-// Route: Pemain (siswa) + progress + leaderboard
-// Dipakai oleh: web kedua (Game Deduksi Sejarah) & web utama (hub)
-// =========================================================
 const express = require('express');
 const router = express.Router();
 const db = require('../lib/db');
 
-// Daftar / ambil profil pemain berdasarkan nama
-router.post('/', (req, res) => {
-  const { nama, hewan } = req.body || {};
-  if (!nama || !String(nama).trim()) return res.status(400).json({ error: 'Nama wajib diisi.' });
-  const name = String(nama).trim().slice(0, 50);
-  let player = db.findOne('players', p => p.nama.toLowerCase() === name.toLowerCase());
-  if (!player) {
-    player = db.insert('players', {
-      nama: name,
-      hewan: hewan || '🐱',
-      poinTotal: 0,
-      levelTerbuka: [1],
-      levelSelesai: [],
-      gelarTerakhir: '',
-      hasilEvaluasi: {},
-    });
-  } else if (hewan && player.hewan !== hewan) {
-    player = db.update('players', player.id, { hewan });
-  }
-  res.json(player);
+router.get('/', async (req, res) => {
+  res.json(await db.findAll('players'));
 });
 
-// Ambil 1 pemain
-router.get('/:nama', (req, res) => {
-  const player = db.findOne('players', p => p.nama.toLowerCase() === String(req.params.nama).toLowerCase());
-  if (!player) return res.status(404).json({ error: 'Pemain tidak ditemukan.' });
-  res.json(player);
+router.get('/:name', async (req, res) => {
+  const p = await db.findOne('players', 'name', req.params.name);
+  p ? res.json(p) : res.status(404).json({ error: 'Tidak ada' });
 });
 
-// Simpan progress pemain
-router.put('/:nama/progress', (req, res) => {
-  const player = db.findOne('players', p => p.nama.toLowerCase() === String(req.params.nama).toLowerCase());
-  if (!player) return res.status(404).json({ error: 'Pemain tidak ditemukan.' });
-  const allowed = ['poinTotal', 'levelTerbuka', 'levelSelesai', 'gelarTerakhir', 'hasilEvaluasi', 'hewan'];
-  const patch = {};
-  for (const k of allowed) if (req.body && req.body[k] !== undefined) patch[k] = req.body[k];
-  const updated = db.update('players', player.id, patch);
-  res.json(updated);
+router.post('/', async (req, res) => {
+  res.status(201).json(await db.insert('players', req.body));
 });
 
-// Leaderboard (peringkat poin) — bisa ditampilkan di web utama
-router.get('/leaderboard/top', (req, res) => {
-  const list = db.findAll('players')
-    .slice()
-    .sort((a, b) => (b.poinTotal || 0) - (a.poinTotal || 0))
-    .slice(0, Number(req.query.limit) || 10)
-    .map((p, i) => ({ rank: i + 1, nama: p.nama, hewan: p.hewan, poinTotal: p.poinTotal || 0 }));
-  res.json(list);
+router.patch('/:id', async (req, res) => {
+  const u = await db.update('players', req.params.id, req.body);
+  u ? res.json(u) : res.status(404).json({ error: 'Tidak ada' });
+});
+
+router.delete('/:id', async (req, res) => {
+  const ok = await db.remove('players', req.params.id);
+  ok ? res.json({ ok: true }) : res.status(404).json({ error: 'Tidak ada' });
 });
 
 module.exports = router;
