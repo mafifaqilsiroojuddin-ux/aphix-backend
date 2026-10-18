@@ -1,20 +1,18 @@
-// =========================================================
-// Route: Konten game (pertemuan & level / bank soal)
-// Public: GET  |  Admin: PUT (edit soal dari jarak jauh)
-// =========================================================
 const express = require('express');
 const router = express.Router();
 const db = require('../lib/db');
-const { adminAuth } = require('../middleware/auth');
 
-router.get('/', (req, res) => {
-  const c = db.getAll('content');
-  res.json(c && Object.keys(c).length ? c : { pertemuan: [] });
+router.get('/:section', async (req, res) => {
+  const d = await db.findOne('content', 'section', req.params.section);
+  d ? res.json(d) : res.json({ section: req.params.section, data: {} });
 });
 
-router.put('/', adminAuth, (req, res) => {
-  db.setAll('content', req.body || { pertemuan: [] });
-  res.json({ ok: true, content: db.getAll('content') });
+router.post('/:section', async (req, res) => {
+  let d = await db.findOne('content', 'section', req.params.section);
+  d = d
+    ? await db.update('content', d.id, { data: req.body })
+    : await db.insert('content', { section: req.params.section, data: req.body });
+  res.json(d);
 });
 
 module.exports = router;
