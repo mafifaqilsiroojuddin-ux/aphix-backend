@@ -42,3 +42,4 @@ app.listen(config.PORT, () => {
   console.log('  Cek: http://localhost:' + config.PORT + '/api/health');
   console.log('=============================================');
 });
+module.exports = app;
